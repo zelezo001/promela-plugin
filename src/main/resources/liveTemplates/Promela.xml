@@ -1,0 +1,68 @@
+<templateSet group="Promela">
+  <template name="pc" value="proctype $VAR$($ARGS$) {$END$}" description="Process type" toReformat="false" toShortenFQNames="true">
+    <variable name="VAR" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="ARGS" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="PROMELA_TOP_LEVEL" value="true" />
+    </context>
+  </template>
+  <template name="apc" value="active proctype $VAR$($ARGS$) {&#10;$END$&#10;}" description="Active process type" toReformat="false" toShortenFQNames="true">
+    <variable name="VAR" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="ARGS" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="PROMELA_TOP_LEVEL" value="true" />
+    </context>
+  </template>
+  <template name="tdef" value="typedef $NAME$ {&#10;    $END$&#10;}" description="Typedef" toReformat="false" toShortenFQNames="true">
+    <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="PROMELA_TOP_LEVEL" value="true" />
+    </context>
+  </template>
+  <template name="mt" value="mtype = {$END$}" description="Mtype definition" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="PROMELA_TOP_LEVEL" value="true" />
+    </context>
+  </template>
+  <template name="if" value="if&#10; :: $CONDITION$ -&gt; $END$&#10;fi" description="If" toReformat="false" toShortenFQNames="true">
+    <variable name="CONDITION" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="PROMELA_SEQUENCE" value="true" />
+    </context>
+  </template>
+  <template name="ife" value="if&#10; :: $CONDITION$ -&gt; $BRANCH$&#10; :: else -&gt; &#10; $END$fi" description="If else" toReformat="false" toShortenFQNames="true">
+    <variable name="CONDITION" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="BRANCH" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="PROMELA_SEQUENCE" value="true" />
+    </context>
+  </template>
+  <template name="sel" value="select ($VAR$ : $FROM$ .. $TO$)&#10;" description="select" toReformat="false" toShortenFQNames="true">
+    <variable name="VAR" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="FROM" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="TO" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="PROMELA_SEQUENCE" value="true" />
+    </context>
+  </template>
+  <template name="atom" value="atomic {$END$}" description="atomic operation" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="PROMELA_SEQUENCE" value="true" />
+    </context>
+  </template>
+  <template name="fori" value="for ($VAR$ in $SRC$) {&#10;    $END$&#10;}" description="for in" toReformat="false" toShortenFQNames="true">
+    <variable name="VAR" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="SRC" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="PROMELA_SEQUENCE" value="true" />
+    </context>
+  </template>
+  <template name="forr" value="for ($VAR$ : $FROM$ .. $TO$) {&#10;    $END$&#10;}" description="for range" toReformat="false" toShortenFQNames="true">
+    <variable name="VAR" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="FROM" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="TO" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="PROMELA_SEQUENCE" value="true" />
+    </context>
+  </template>
+</templateSet>

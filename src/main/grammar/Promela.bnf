@@ -1,0 +1,620 @@
+{
+  tokens=[
+      semi=';'
+      arrow='->'
+      comma=','
+      col=':'
+      sep='::'
+      dot='.'
+      at='@'
+      qMark='?'
+      openBracket='('
+      closeBracket=')'
+      openCurlyBracket='{'
+      closeCurlyBracket='}'
+      openSquareBracket='['
+      closeSquareBracket=']'
+
+      op_plus='+'
+      op_minus='-'
+      op_star='*'
+      op_div='/'
+      op_mod='%'
+      op_band='&'
+      op_xor='^'
+      op_bor='|'
+      op_lt='<'
+      op_le='<='
+      op_gt='>'
+      op_ge='>='
+      op_asgn='='
+      op_eq='=='
+      op_neq='!='
+      op_bang='!'
+      op_neg='~'
+      op_sleft='<<'
+      op_sright='>>'
+      op_and='&&'
+      op_or='||'
+      dotdot='..'
+      incdec='regexp:\+\+|--'
+
+      inline_kw='inline'
+      proctype_kw='proctype'
+      proctype_d_kw='D_proctype'
+      init_kw='init'
+      never_kw='never'
+      trace_kw='trace'
+      notrace_kw='notrace'
+      typedef_kw='typedef'
+      mtype_kw='mtype'
+      unsigned_kw='unsigned'
+      bit_type_kw='bit'
+      bool_type_kw='bool'
+      byte_type_kw='byte'
+      short_type_kw='short'
+      int_type_kw='int'
+      chan_type_kw='chan'
+      active_kw='active'
+      priority_kw='priority'
+      provided_kw='provided'
+      hidden_kw='hidden'
+      local_kw='local'
+      show_kw='show'
+      unless_kw='unless'
+      xr_kw='xr'
+      xs_kw='xs'
+      of_kw='of'
+      eval_kw='eval'
+      do_kw='do'
+      do_end_kw='od'
+      if_kw='if'
+      if_end_kw='fi'
+      atomic_kw='atomic'
+      for_kw='for'
+      assert_kw='assert'
+      d_step_kw='d_step'
+      select_kw='select'
+
+      c_code_kw='c_code'
+      c_expr_kw='c_expr'
+      c_decl_kw='c_decl'
+      c_track_kw='c_track'
+      c_state_kw='c_state'
+      else_kw='else'
+      break_kw='break'
+      goto_kw='goto'
+      printf_kw='printf'
+      printm_kw='printm'
+      in_kw='in'
+      len_kw='len'
+      timeout_kw='timeout'
+      np_kw='np_'
+      enabled_kw='enabled'
+      pc_value_kw='pc_value'
+      run_kw='run'
+      ltl_kw='ltl'
+      get_priority_kw='get_priority'
+      set_priority_kw='set_priority'
+      const_true='true'
+      const_false='false'
+      const_skip='skip'
+
+      chanpoll_full='full'
+      chanpoll_empty='empty'
+      chanpoll_nfull='nfull'
+      chanpoll_nempty='nempty'
+      return_kw='return'
+
+      uname='regexp:[A-Za-z_][A-Za-z_0-9]*'
+      number='regexp:\d+'
+      eol="\n"
+      eol_or_semi=""
+      whitespace="regexp:\s+"
+      line_comment='regexp://.*'
+      block_comment='regexp:/[*]([*]+[^*/]|[^*])*[*]+/'
+      preprocessor_comment='regexp:#.*'
+      disabled_code="ignored code"
+      string="regexp:('([^'\\]|\\.)*'|\"([^\"\\]|\\.)*\")"
+      c_code=".*"
+  ]
+
+  parserClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.parser.PromelaParser"
+  parserUtilClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.parser.PromelaParserUtil"
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+  psiClassPrefix="Promela"
+  psiImplClassSuffix="Impl"
+  psiPackage="cz.cuni.mff.gitlab.zelezno.promelaplugin.psi"
+  psiImplPackage="cz.cuni.mff.gitlab.zelezno.promelaplugin.psi.impl"
+
+    elementTypeHolderClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.psi.PromelaTypes"
+    elementTypeClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PromelaElementType"
+    tokenTypeClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PromelaTokenType"
+    psiImplUtilClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.PromelaPsiImplUtil"
+
+  extends(".*base_expression")=base_expression
+  extends(".*any_expression")=any_expression
+  extends(".*const_expression")=const_expression
+
+}
+
+// Grammar of Spin taken from http://spinroot.com/spin/Man/grammar.html
+
+root ::= <<eolOrSemiAsEOL>> modules
+
+modules ::= (module | semicolon_or_arrow)+ {
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.ModulesImplMixin"
+}
+
+private module ::=
+    proctype
+    | init
+    | never
+    | ltl
+    | trace
+    | utype
+    | mtype
+    | one_decl
+    | inline
+    | c_fcts
+
+identifier ::= <<consumeNonSpecialIdentifier>> {
+    methods=[getName]
+}
+
+// C
+private ccode_body ::= ('[' c_code* ']')? '{' c_code* '}'
+private ccode ::= ('c_code' | 'c_decl') ccode_body {pin=1}
+private cstate ::= ('c_state' | 'c_track') string string string?  {pin=1}
+private c_fcts ::= cstate | ccode
+var ::= identifier {
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.VarImplMixin"
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PsiVariableReferencingElement"
+}
+
+
+private proctype_decl_list_r ::= !(')')
+private proctype_decl_list ::= !(')') decl_lst {recoverWhile=proctype_decl_list_r}
+
+private active_value_r ::= !']'
+private active_value ::= const_expression {
+recoverWhile=active_value_r
+}
+active_priority ::= '[' active_value ']' {pin=1}
+active   ::= 'active' [ active_priority ]	/* instantiation */ {
+ pin=1
+ recoverWhile=active_r
+}
+
+private active_r ::= !proctype_type
+
+d_proctype ::= 'D_proctype'
+private proctype_type ::= ('proctype' | d_proctype)
+private active_proctype ::= active proctype_type {pin=1}
+proctype_header ::= proctype_type | active_proctype
+private proctype_declaration ::= proctype_header  identifier <<parenthesis [ proctype_decl_list ]>> [ priority ] [ enabler ]
+{
+    pin=1
+    recoverWhile=proctype_declaration_r
+}
+
+private proctype_declaration_r ::= !'{'
+proctype ::= proctype_declaration sequence_block {
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.ProctypeImplMixin"
+    implements=["cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PromelaNamedElement"]
+    pin=1
+}
+run ::= 'run' identifier <<parenthesis [ arg_lst ]>> [ priority ] {
+    pin=1
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.RunImplMixin"
+}
+
+inline_arg ::= identifier {
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PsiVariable"
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.InlineArgImplMixin"
+    pin=1
+    recoverWhile="inline_arg_r"
+}
+private inline_arg_r ::= !(')'|','| '}')
+private inline_args_par ::= [inline_arg ( ',' inline_arg ) *]
+private inline_args ::= <<parenthesis inline_args_par>> {pin=1;}
+inline ::= 'inline' <<captureUname>> identifier inline_args sequence_block {
+    pin=1
+	hooks=[inlineAdded]
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PromelaNamedElement"
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.InlineImplMixin"
+}
+
+private init_header ::= 'init' [ priority ] {
+    pin=1
+    recoverWhile=init_header_r
+}
+private init_header_r ::= !('{')
+init ::= init_header sequence_block {
+    pin=1
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.InitImplMixin"
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.NavigablePsiElement"
+}
+
+never ::= 'never' identifier? sequence_block {
+    pin=1
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.NeverImplMixin"
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.NavigablePsiElement"
+}
+
+no_trace ::= 'notrace'
+trace ::= ('trace' | no_trace) sequence_block {
+    pin=1
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.TraceImplMixin"
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.NavigablePsiElement"
+}
+
+private utype_one_decl_r ::= !(close_curly_bracket)
+private utype_decl_list ::= one_decl (semicolon_rule one_decl) * {recoverWhile=utype_one_decl_r}
+
+utype ::= 'typedef' <<captureUname>> identifier '{' <<eolOrSemiAsSemi>> utype_decl_list close_curly_bracket {
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.UTypeImplMixin"
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PsiTypeDeclaration"
+	pin=1
+	hooks=[userTypeAdded;popRemapper]
+}
+
+
+mtype_value ::= identifier {
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PsiVariable"
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.MTypeValueImplMixin"
+}
+mtype ::= 'mtype'  [( mtype_subtype '=' | '=' )] '{' mtype_value  (',' mtype_value)* close_curly_bracket {
+    pin="{"
+    implements=[
+        "cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PsiTypeDeclaration"
+    ]
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.MTypeImplMixin"
+}
+
+private decl_lst ::= one_decl ( semicolon_rule one_decl ) *
+
+private size_initializer_const_expression ::= const_expression {
+    recoverWhile=size_initializer_const_expression_r
+}
+private size_initializer_const_expression_r ::= !']'
+size_initializer ::= '[' size_initializer_const_expression ']'
+
+private constant_list ::= const (',' const)* {
+ recoverWhile=constant_list_recover
+}
+private constant_list_recover ::= !('}' | ';')
+array_init ::= "{" constant_list "}" {pin=1}
+
+ivar     ::= identifier size_initializer? ('=' array_init | '=' any_expression | '=' ch_init)? {
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.IVarImplMixin"
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PsiVariable"
+}
+
+// in spin eol_as_semi are not inserted after custom types as lexer knows about them, as we don't propagate symbols
+// to lexer, we must handle possibility that lexer inserted eol_or_semi after uname tokens
+private one_decl_type ::= <<eolOrSemiRaw>> typename eol_or_semi* {
+    pin = 2
+    hooks=[popRemapper]
+}
+
+private one_decl_with_typename ::= one_decl_type ivar (',' ivar) * {
+    pin=1
+}
+one_decl ::= visible? (one_decl_with_typename | unsigned_decl) {
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.OneDeclImplMixin"
+}
+
+unsigned_decl ::= 'unsigned' identifier ':' const [ '=' any_expression ] {
+    pin=1
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.UnsignedDeclImplMixin"
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PsiVariable"
+}
+
+custom_typename ::= <<consumeType>> {
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.CustomTypenameImplMixin"
+    implements=[
+        "cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.NamedPsiElement"
+        "cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PsiElementWithType"
+    ]
+}
+
+private mtype_subtype ::= ':' identifier {pin=1}
+mtypename ::= 'mtype' mtype_subtype?  {
+     mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.MtypenameImplMixin"
+        implements=[
+            "cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.NamedPsiElement"
+            "cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PsiElementWithType"
+        ]
+}
+
+typename ::= 'bit' | 'bool' | 'byte' | 'short' | 'int' | mtypename | 'chan'
+	| custom_typename	/* user defined type names (see utype) */ {
+        mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.TypenameImplMixin"
+        implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PsiElementWithType"
+	}
+
+priority ::= 'priority' const	/* simulation priority */ {
+ pin=1
+}
+
+enabler  ::= 'provided' <<parenthesis base_expression>> {pin=1}	/* execution constraint */
+
+visible ::= 'hidden' | 'show' | 'local'
+
+sequence_block ::= '{' sequence semicolon_or_arrow? close_curly_bracket {pin=1}
+//private sequence_block_recover ::= !('}')
+
+sequence ::= <<eolOrSemiAsSemi>> step (semicolon_or_arrow+ step)*  {
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.SequenceImplMixin"
+    hooks=[popRemapper]
+}
+
+private xrxs ::= ('xr' | 'xs') varref (',' varref ) * {pin=1}
+
+step ::=
+	decl_lst
+    | stmnt ('unless' stmnt)?
+    | xrxs
+	{
+        mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.StepImplMixin"
+        recoverWhile="step_recover"
+        pin=1
+	}
+
+private step_recover ::= !('od'|'fi'|'::' | '}' | semicolon_or_arrow)
+
+ch_init_types ::= typename ( ',' typename ) * {
+    recoverWhile=ch_init_types_r
+}
+private ch_init_types_r ::= !close_curly_bracket
+ch_init  ::= '[' const_expression ']' 'of' '{' ch_init_types close_curly_bracket
+{pin=4}
+
+property_access ::= identifier [ indexer ]
+indexer ::= '[' any_expression ']'
+varref ::= var [ indexer ] ('.' property_access)* {
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.VarRefImplMixin"
+}
+
+send     ::= varref '!' send_args		/* normal fifo send */
+	| varref '!' '!' send_args	/* sorted send */
+receive  ::= varref '?' recv_args		/* normal receive */
+	| varref '?' '?' recv_args	/* random receive */
+	| varref '?' '<' recv_args '>'	/* poll with side-effect */
+	| varref '?' '?' '<' recv_args '>'	/* ditto */
+poll     ::= varref '?' '[' recv_args ']'	/* poll without side-effect */
+	| varref '?' '?' '[' recv_args ']'	/* ditto */
+
+send_args ::= any_expression <<parenthesis arg_lst >> | arg_lst
+
+arg_lst   ::= any_expression ( ',' any_expression ) *
+
+recv_args ::= recv_arg <<parenthesis recv_args>> | recv_arg ( ',' recv_arg ) *
+
+recv_arg  ::= varref | 'eval' <<parenthesis varref>> | [ '-' ] const
+
+assign   ::= varref '=' base_expression /* standard assignment */
+	| varref incdec	/* increment/decrement */ | inline_call
+
+private if_options ::= options {
+    recoverWhile=if_options_r
+}
+private if_options_r ::= !('fi')
+if_stmnt ::= 'if' if_options 'fi' {pin=1}
+for_stmnt ::= 'for' <<parenthesis range >> semi? sequence_block {pin=1}
+atomic_stmnt ::= 'atomic' sequence_block {pin=1}
+
+
+private do_options ::= options {
+    recoverWhile=do_options_r
+}
+private do_options_r ::= !('od')
+do_stmnt ::= 'do' do_options 'od' {pin=1}
+private d_step ::= 'd_step' sequence_block	/* deterministic atomic */ {pin=1}
+
+// handling of EOL remapping in parenthesis
+private parenthesis_remapper ::= <<eolOrSemiAsEOL>>
+meta parenthesis ::= '(' parenthesis_remapper <<param>> ')' {
+    hooks=[popRemapper]
+}
+
+private select ::= 'select' <<parenthesis number_range >>/* non-deterministic value selection */ {pin=1}
+goto ::= 'goto' identifier {
+    pin=1
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.GotoImplMixin"
+}
+private printf ::= 'printf' <<parenthesis (string [ ',' arg_lst ]) >> {pin=1}
+private printm ::= 'printm' <<parenthesis (varref|const) >> {pin=1}
+private assert ::= 'assert' base_expression
+
+label ::= identifier ':' {
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.LabelImplMixin"
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PromelaNamedElement"
+}
+
+stmnt ::=
+    if_stmnt
+	| atomic_stmnt
+	| for_stmnt
+    | d_step
+    | select
+	| do_stmnt
+	| 'else'			/* used inside options */
+	| 'break'			/* used inside iterations */
+	| 'skip'
+	| goto
+	| printf
+	| printm
+	| assert
+	| ccode
+	| sequence_block	/* normal sequence */
+    | label stmnt	/* labeled statement */
+    | assign
+	| send
+    | receive
+    | inline_call
+    | 'return' base_expression // not in the official grammar
+    | base_expression			/* condition */
+
+
+private number_range ::= var ':' any_expression '..' any_expression
+range ::= number_range
+	| var 'in' varref // in official documentation there is var instead of varref
+
+option ::= '::' sequence semicolon_or_arrow? {pin=1}
+
+private options  ::= option+
+
+private binarop ::= <<consumeBinOperation>>
+
+private unarop ::= <<consumeUnOperation>>
+
+inline_call ::= <<eolOrSemiAsEOL>> <<consumeInline>> '(' [ arg_lst ] ')' {
+    pin=2
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.InlineCallImplMixin"
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.NamedPsiElement"
+    hooks=[popRemapper]
+}
+len ::= 'len' <<parenthesis varref>> {pin=1}	/* nr of messages in chan */
+
+wrap_any_expression ::= <<parenthesis any_expression>>
+binary_any_expression ::=  any_expression binarop any_expression
+unary_any_expression ::=  unarop any_expression
+ternary_any_expression ::=  <<parenthesis (any_expression '->' any_expression ':' any_expression)>>
+len_any_expression ::=  len
+poll_any_expression ::=  poll
+cexpr_any_expression ::=  c_expr_kw ccode_body
+varref_any_expression ::=  varref
+const_any_expression ::=  const
+timeout_any_expression ::=  'timeout'
+np_any_expression ::=  'np_'			/* non-progress system state */
+enabled_any_expression ::=  'enabled' <<parenthesis any_expression>>		/* refers to a pid */ {pin=1}
+pc_value_any_expression ::=  'pc_value' <<parenthesis any_expression>>		/* refers to a pid */ {pin=1}
+run_any_expression ::=  run
+get_priority_any_expression ::=  'get_priority' <<parenthesis any_expression>> {pin=1}			/* any_expression refers to a pid */
+set_priority_any_expression ::=  'set_priority' <<parenthesis (any_expression ',' any_expression)>>	 {pin=1}	/* first any_expression refers to a pid */
+pid_refer_any_expression ::=
+    var pid_ref_opt? '@' var
+    | var pid_ref_opt? ':' var/* refers to a pid */
+
+private pid_ref_opt ::= '[' any_expression ']'
+
+any_expression ::=
+        wrap_any_expression
+        | binary_any_expression
+        | pid_refer_any_expression
+        | unary_any_expression
+        | ternary_any_expression
+        | len_any_expression
+        | poll_any_expression
+        | varref_any_expression
+        | cexpr_any_expression
+        | const_any_expression
+        | timeout_any_expression
+        | np_any_expression
+        | enabled_any_expression
+        | pc_value_any_expression
+        | run_any_expression
+        | get_priority_any_expression
+        | set_priority_any_expression
+
+private ltl_unop ::= <<consumeTokenPair 'OP_LT' 'OP_GT'>> // <>
+    | <<consumeTokenPair 'OPENSQUAREBRACKET' 'CLOSESQUAREBRACKET'>> // []
+    | <<consumeLTLUnaryOps>>
+
+private ltl_binop ::= '->'
+ | <<consumeTokenPair 'OP_LT' 'ARROW'>>  // <->
+ | <<consumeLTLBinaryOp>>
+
+ltl_bin_base_expression ::= base_expression <<ltlEnabled>> ltl_binop base_expression
+ltl_un_base_expression ::= <<ltlEnabled>> ltl_unop base_expression
+chanpoll_base_expression ::= chanpoll <<parenthesis varref>> {pin=1}
+
+wrap_base_expression ::= <<parenthesis base_expression>>
+binary_base_expression ::=  base_expression binarop base_expression
+unary_base_expression ::=  unarop base_expression
+ternary_base_expression ::=  <<parenthesis (any_expression '->' any_expression ':' any_expression)>>
+len_base_expression ::=  len
+poll_base_expression ::=  poll
+varref_base_expression ::=  varref
+const_base_expression ::=  const
+timeout_base_expression ::=  'timeout'
+np_base_expression ::=  'np_'			/* non-progress system state */
+enabled_base_expression ::=  'enabled' <<parenthesis any_expression>>		/* refers to a pid */ {pin=1}
+pc_value_base_expression ::=  'pc_value' <<parenthesis any_expression>>		/* refers to a pid */ {pin=1}
+run_base_expression ::=  run
+get_priority_base_expression ::=  'get_priority' <<parenthesis any_expression>> {pin=1}			/* any_expression refers to a pid */
+set_priority_base_expression ::=  'set_priority' <<parenthesis (any_expression ',' any_expression)>>	 {pin=1}	/* first any_expression refers to a pid */
+pid_refer_base_expression ::=
+    var pid_ref_opt? '@' var
+    | var pid_ref_opt? ':' var/* refers to a pid */
+
+base_expression ::=
+        wrap_base_expression
+        | chanpoll_base_expression
+        | binary_base_expression
+        | ltl_bin_base_expression
+        | ltl_un_base_expression
+        | pid_refer_base_expression
+        | unary_base_expression
+        | ternary_base_expression
+        | len_base_expression
+        | poll_base_expression
+        | varref_base_expression
+        | const_base_expression
+        | timeout_base_expression
+        | np_base_expression
+        | enabled_base_expression
+        | pc_value_base_expression
+        | run_base_expression
+        | get_priority_base_expression
+        | set_priority_base_expression
+// not in the spin docs, taken from Spin parser
+multiplication_const_expression ::= unary_const_expression <<consumeMultiplicativeOperation>> multiplication_const_expression | unary_const_expression
+{
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.MultiplicationConstExpressionImplMixin"
+}
+addition_const_expression ::= (multiplication_const_expression <<consumeAdditiveOperation>> addition_const_expression) | multiplication_const_expression
+{
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.AdditionConstExpressionImplMixin"
+}
+unary_const_expression ::= '-' unit_const_expression | unit_const_expression
+{
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.UnaryConstExpressionImplMixin"
+}
+unit_const_expression ::= const | wrap_const_expression
+{
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.UnitConstExpressionImplMixin"
+}
+private wrap_const_expression ::= <<parenthesis const_expression>>
+
+const_expression ::= addition_const_expression {
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.ConstantExpression"
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.ConstExpressionImplMixin"
+}
+
+chanpoll ::= 'full' | 'empty' | 'nfull' | 'nempty'
+
+number_rule ::= <<consumeNumber>> {
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.ConstantExpression"
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.PromelaNumberRuleImplMixin"
+}
+const ::= 'true' | 'false' | 'skip' | number_rule
+
+// spin discards first semi/arrow before  semi/arrow/curly close bracket
+// this handling it here is easier than doing it lexer, where it would require looking over comments/macros and handling eol_or_semi tokens
+// whose interpretation depends compiler state
+private semicolon_rule ::= ((semi | arrow) semi) | semi
+private close_curly_bracket ::= ((semi | arrow) '}') | '}'
+
+// arrow cannot be its own rule as `arrow` must be after semicolon_rule (otherwise arrow would be matched instead of `arrow semi`)
+private semicolon_or_arrow ::= ((semi | arrow) arrow) | semicolon_rule | arrow
+
+ltl ::= "ltl" <<enableLTL>> identifier? ltl_body <<disableLTL>> {
+    pin=1
+    implements="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.PromelaNamedElement"
+    mixin="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.LtlImplMixin"
+}
+
+ltl_body ::= '{'  <<enableLTL>> base_expression semicolon_rule?  <<disableLTL>> '}' {pin=1}

@@ -1,0 +1,134 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>cz.cuni.mff.gitlab.zelezno.promela-plugin</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
+    <name>Promela</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor>Ondřej Železňák</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
+    <description>
+        <![CDATA[
+        <p>The plugin adds support for the Promela language and the Spin model checker.</p>
+
+        <h2>Features:</h2>
+        <ul>
+           <li>Coding assistance (highlighting, context-aware completion, formatting, etc.)</li>
+           <li>Navigation and search (jump to declarations, find usages, structure view, documentation)</li>
+           <li>Verification and simulation (integrated Spin execution via Run Configurations)</li>
+           <li>State automata rendering for opened models</li>
+           <li>Partial support for preprocessor directives in Promela source doe (#include not included)</li>
+        </ul>
+
+        <h2>Getting Started</h2>
+        <ol>
+        <li>Install a compatible JetBrains IDE, such as IntelliJ IDEA (2026.1+)</li>
+        <li>Ensure the Spin binary and a C compiler are installed on your system</li>
+        <li>Launch the IDE, search for "Promela" in plugin settings, and click install</li>
+        </ol>
+
+        <h2>Spin integration</h2>
+        <p>To make use of Spin-related features (automata, simulation/verification runs). Modules
+        containing Promela files must have sdk set to "Spin SDK" and must be located inside a source content root.</p>
+        ]]>
+    </description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends config-file="java-deps.xml">com.intellij.java</depends>
+
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+
+        <fileEditorProvider implementation="cz.cuni.mff.gitlab.zelezno.promelaplugin.editor.PromelaFileEditorProvider"
+                            id="PromelaFileEditorProvider"/>
+
+        <moduleBuilder builderClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.project.module.PromelaModuleBuilder"/>
+        <sdkType id="spin-sdk" implementation="cz.cuni.mff.gitlab.zelezno.promelaplugin.project.sdk.SpinSDK"/>
+
+        <facetType implementation="cz.cuni.mff.gitlab.zelezno.promelaplugin.project.facet.PromelaFacetType"
+                   id="promela-facet"/>
+
+        <configurationType
+                implementation="cz.cuni.mff.gitlab.zelezno.promelaplugin.verification.VerificationConfigurationType"/>
+        <configurationType
+                implementation="cz.cuni.mff.gitlab.zelezno.promelaplugin.simulation.configuration.SimulationConfigurationType"/>
+        <compiler.buildTargetScopeProvider
+                implementation="cz.cuni.mff.gitlab.zelezno.promelaplugin.build.PromelaBuildTargetScopeProvider"/>
+        <lang.psiStructureViewFactory language="PROMELA"
+                                      implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.structure.PromelaStructureViewFactory"/>
+        <defaultLiveTemplates file="/liveTemplates/Promela.xml"/>
+        <langCodeStyleSettingsProvider
+                implementation="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.formatting.PromelaLanguageCodeStyleSettingsProvider"/>
+        <lang.formatter language="PROMELA"
+                        implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.formatting.PromelaFormattingModelBuilder"/>
+        <liveTemplateContext contextId="PROMELA"
+                             implementation="cz.cuni.mff.gitlab.zelezno.promelaplugin.live_template.PromelaFileContext"/>
+        <liveTemplateContext contextId="PROMELA_EXPRESSION" baseContextId="PROMELA"
+                             implementation="cz.cuni.mff.gitlab.zelezno.promelaplugin.live_template.PromelaExpressionContext"/>
+        <liveTemplateContext contextId="PROMELA_SEQUENCE" baseContextId="PROMELA"
+                             implementation="cz.cuni.mff.gitlab.zelezno.promelaplugin.live_template.PromelaSequenceContext"/>
+        <liveTemplateContext contextId="PROMELA_TOP_LEVEL" baseContextId="PROMELA"
+                             implementation="cz.cuni.mff.gitlab.zelezno.promelaplugin.live_template.PromelaTopLevelContext"/>
+
+        <platform.backend.documentation.psiTargetProvider
+                implementation="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.documentation.PromelaElementDocumentationProvider"/>
+        <lang.elementManipulator forClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.psi.impl.PromelaRunImpl"
+                                 implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.PromelaRunManipulator"/>
+        <lang.elementManipulator forClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.psi.impl.PromelaCustomTypenameImpl"
+                                 implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.PromelaCustomTypenameManipulator"/>
+        <lang.elementManipulator forClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.psi.impl.PromelaIdentifierImpl"
+                                 implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.IdentifierManipulator"/>
+        <lang.elementManipulator forClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.psi.impl.PromelaVarImpl"
+                                 implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.impl.VarManipulator"/>
+        <inspection.basicVisitor class="cz.cuni.mff.gitlab.zelezno.promelaplugin.psi.PromelaVisitor"/>
+
+        <fileType name="Promela"
+                  implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.PromelaFileType"
+                  fieldName="INSTANCE"
+                  language="PROMELA"
+                  extensions="pml"/>
+        <annotator language="PROMELA"
+                   implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.hightlighting.IgnoredCodeHighlightingAnnotator"/>
+        <annotator language="PROMELA"
+                   implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.hightlighting.ProctypeHighlightingAnnotator"/>
+        <annotator language="PROMELA"
+                   implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.hightlighting.InlineHighlightingAnnotator"/>
+        <lang.parserDefinition
+                language="PROMELA"
+                implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.psi.parser.PromelaParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="PROMELA"
+                                       implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.hightlighting.PromelaSyntaxHighlighterFactory"/>
+        <completion.contributor language="PROMELA"
+                                implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.completion.PromelaCompletionContributor"/>
+        <lang.findUsagesProvider language="PROMELA"
+                                 implementationClass="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.usage.PromelaFindUsagesProvider"/>
+        <colorSettingsPage
+                implementation="cz.cuni.mff.gitlab.zelezno.promelaplugin.language.hightlighting.PromelaColorSettingsPage"/>
+    </extensions>
+    <actions resource-bundle="messages.promela">
+        <group id="Promela.AutomatonView">
+            <action id="Promela.AutomatonView.ReloadAction"
+                    class="cz.cuni.mff.gitlab.zelezno.promelaplugin.editor.action.ReloadAction"
+                    use-shortcut-of="Refresh"/>
+            <action id="Promela.AutomatonView.ResetZoomAction"
+                    class="cz.cuni.mff.gitlab.zelezno.promelaplugin.editor.action.ResetZoomAction"/>
+            <action id="Promela.AutomatonView.ZoomInAction"
+                    class="cz.cuni.mff.gitlab.zelezno.promelaplugin.editor.action.ZoomInAction"
+                    use-shortcut-of="ExpandAll"/>
+            <action id="Promela.AutomatonView.ZoomOutAction"
+                    class="cz.cuni.mff.gitlab.zelezno.promelaplugin.editor.action.ZoomOutAction"
+                    use-shortcut-of="CollapseAll"/>
+        </group>
+    </actions>
+    <resource-bundle>messages.promela</resource-bundle>
+</idea-plugin>
